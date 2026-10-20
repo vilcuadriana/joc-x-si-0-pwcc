@@ -1,6 +1,9 @@
 (() => {
   // DOM Elements
   const cells = document.querySelectorAll('.cell');
+  const boardEl = document.getElementById('board');
+  const winningLineSvg = document.getElementById('winning-line-svg');
+  const winningLine = document.getElementById('winning-line');
   const statusText = document.getElementById('status-text');
   const gameModeSelect = document.getElementById('game-mode');
   const restartBtn = document.getElementById('restart-btn');
@@ -28,6 +31,7 @@
   let isGameActive = true;
   let isAiThinking = false;
   let aiTimeoutId = null;
+  let activeWinningCombo = null;
   let soundEnabled = localStorage.getItem('tictactoe_sound') !== 'false';
   let scores = {
     X: parseInt(localStorage.getItem('tictactoe_score_x')) || 0,
@@ -103,7 +107,10 @@
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
   }
-  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    updateWinningLinePosition();
+  });
   resizeCanvas();
 
   function triggerConfetti() {
@@ -253,6 +260,92 @@
     playSound(player === 'X' ? 'moveX' : 'moveO');
   }
 
+  // Winning Line Renderer (SVG Overlay)
+  function drawWinningLine(combo, winner) {
+    if (!combo || !winningLine || !winningLineSvg || !boardEl) return;
+    activeWinningCombo = { combo, winner };
+
+    const startCell = cells[combo[0]];
+    const endCell = cells[combo[2]];
+    const boardRect = boardEl.getBoundingClientRect();
+    const startRect = startCell.getBoundingClientRect();
+    const endRect = endCell.getBoundingClientRect();
+
+    const x1 = startRect.left + startRect.width / 2 - boardRect.left;
+    const y1 = startRect.top + startRect.height / 2 - boardRect.top;
+    const x2 = endRect.left + endRect.width / 2 - boardRect.left;
+    const y2 = endRect.top + endRect.height / 2 - boardRect.top;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const length = Math.hypot(dx, dy);
+
+    // Prelungire ușoară a liniei dincolo de centrele celulelor
+    const extension = Math.min(startRect.width, startRect.height) * 0.35;
+    const sx = x1 - (dx / length) * extension;
+    const sy = y1 - (dy / length) * extension;
+    const ex = x2 + (dx / length) * extension;
+    const ey = y2 + (dy / length) * extension;
+
+    const totalLength = length + extension * 2;
+
+    winningLine.setAttribute('x1', sx.toFixed(1));
+    winningLine.setAttribute('y1', sy.toFixed(1));
+    winningLine.setAttribute('x2', ex.toFixed(1));
+    winningLine.setAttribute('y2', ey.toFixed(1));
+
+    winningLine.style.strokeDasharray = `${totalLength.toFixed(1)}`;
+    winningLine.style.strokeDashoffset = `${totalLength.toFixed(1)}`;
+
+    winningLineSvg.className = `winning-line-svg visible ${winner.toLowerCase()}`;
+
+    // Forțează un reflow pentru a declanșa animația strokeDashoffset
+    void winningLine.getBoundingClientRect();
+    winningLine.style.strokeDashoffset = '0';
+  }
+
+  function updateWinningLinePosition() {
+    if (!activeWinningCombo || !winningLine || !boardEl) return;
+    const { combo } = activeWinningCombo;
+    const startCell = cells[combo[0]];
+    const endCell = cells[combo[2]];
+    const boardRect = boardEl.getBoundingClientRect();
+    const startRect = startCell.getBoundingClientRect();
+    const endRect = endCell.getBoundingClientRect();
+
+    const x1 = startRect.left + startRect.width / 2 - boardRect.left;
+    const y1 = startRect.top + startRect.height / 2 - boardRect.top;
+    const x2 = endRect.left + endRect.width / 2 - boardRect.left;
+    const y2 = endRect.top + endRect.height / 2 - boardRect.top;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const length = Math.hypot(dx, dy);
+
+    const extension = Math.min(startRect.width, startRect.height) * 0.35;
+    const sx = x1 - (dx / length) * extension;
+    const sy = y1 - (dy / length) * extension;
+    const ex = x2 + (dx / length) * extension;
+    const ey = y2 + (dy / length) * extension;
+
+    winningLine.setAttribute('x1', sx.toFixed(1));
+    winningLine.setAttribute('y1', sy.toFixed(1));
+    winningLine.setAttribute('x2', ex.toFixed(1));
+    winningLine.setAttribute('y2', ey.toFixed(1));
+  }
+
+  function clearWinningLine() {
+    activeWinningCombo = null;
+    if (winningLineSvg) winningLineSvg.className = 'winning-line-svg';
+    if (winningLine) {
+      winningLine.removeAttribute('style');
+      winningLine.setAttribute('x1', '0');
+      winningLine.setAttribute('y1', '0');
+      winningLine.setAttribute('x2', '0');
+      winningLine.setAttribute('y2', '0');
+    }
+  }
+
   // End Game
   function endGame(result) {
     isGameActive = false;
@@ -273,10 +366,15 @@
 
       updateStatus(`🎉 ${winnerName} a câștigat!`, result.winner === 'X' ? 'winner-x' : 'winner-o');
 
-      // Highlight winning cells
-      result.combo.forEach(idx => {
-        cells[idx].classList.add('win');
+      // Evidențiere vizuală pe tablă și animație celule câștigătoare
+      boardEl.classList.add('has-winner');
+      result.combo.forEach((idx, step) => {
+        const cell = cells[idx];
+        cell.classList.add('win');
+        cell.style.setProperty('--win-delay', `${step * 140}ms`);
       });
+
+      drawWinningLine(result.combo, result.winner);
 
       triggerConfetti();
       playSound('win');
@@ -437,9 +535,15 @@
     isGameActive = true;
     isAiThinking = false;
 
+    if (boardEl) {
+      boardEl.classList.remove('has-winner');
+    }
+    clearWinningLine();
+
     cells.forEach(cell => {
       cell.textContent = '';
       cell.className = 'cell';
+      cell.style.removeProperty('--win-delay');
       cell.removeAttribute('aria-label');
     });
 
