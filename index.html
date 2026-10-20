@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joc X și 0 | Tic-Tac-Toe Modern</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230f172a%22/><path d=%22M7 7l6 6m0-6l-6 6%22 stroke=%22%2300f2fe%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/><circle cx=%2222%22 cy=%2222%22 r=%224%22 fill=%22none%22 stroke=%22%23ff007f%22 stroke-width=%222.5%22/></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1 class="logo">X <span>și</span> 0</h1>
+        <button id="sound-btn" class="icon-btn" title="Comută sunetul" aria-label="Sunet">
+          <span id="sound-icon">🔊</span>
+        </button>
+      </div>
+
+      <div class="controls-card">
+        <div class="mode-select-group">
+          <label for="game-mode">Mod joc:</label>
+          <select id="game-mode">
+            <option value="pvp">👥 2 Jucători (Local)</option>
+            <option value="ai-easy">🤖 vs AI (Ușor)</option>
+            <option value="ai-medium">🤖 vs AI (Mediu)</option>
+            <option value="ai-hard" selected>🧠 vs AI (Imbatabil)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="game-area">
+      <div class="scoreboard">
+        <div class="score-card score-x active" id="card-x">
+          <span class="player-symbol">X</span>
+          <span class="player-name" id="name-x">Jucător X</span>
+          <span class="score-value" id="score-x">0</span>
+        </div>
+        <div class="score-card score-tie" id="card-tie">
+          <span class="player-symbol">🤝</span>
+          <span class="player-name">Remize</span>
+          <span class="score-value" id="score-tie">0</span>
+        </div>
+        <div class="score-card score-o" id="card-o">
+          <span class="player-symbol">0</span>
+          <span class="player-name" id="name-o">AI (0)</span>
+          <span class="score-value" id="score-o">0</span>
+        </div>
+      </div>
+
+      <div class="status-box" id="status-text">
+        Rândul lui <strong>X</strong>
+      </div>
+
+      <div class="board-wrapper">
+        <div class="board" id="board">
+          <button class="cell" data-index="0" aria-label="Celula 1"></button>
+          <button class="cell" data-index="1" aria-label="Celula 2"></button>
+          <button class="cell" data-index="2" aria-label="Celula 3"></button>
+          <button class="cell" data-index="3" aria-label="Celula 4"></button>
+          <button class="cell" data-index="4" aria-label="Celula 5"></button>
+          <button class="cell" data-index="5" aria-label="Celula 6"></button>
+          <button class="cell" data-index="6" aria-label="Celula 7"></button>
+          <button class="cell" data-index="7" aria-label="Celula 8"></button>
+          <button class="cell" data-index="8" aria-label="Celula 9"></button>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="restart-btn" class="btn btn-primary">
+          <span class="btn-icon">🔄</span> Runda Nouă
+        </button>
+        <button id="reset-score-btn" class="btn btn-secondary">
+          <span class="btn-icon">🗑️</span> Resetează Scor
+        </button>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Creat cu pasiune &bull; Funcționează pe desktop și mobil</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
